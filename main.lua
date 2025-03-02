@@ -1,32 +1,39 @@
-# This is a sample Python script.
+-- Funktion zum Zeichnen eines Ladebalkens
+function drawProgressBar(x, y, width, current, max)
+    local ratio = current / max
+    local filled = math.floor(ratio * width)
+    local bar = ""
 
-# Press Umschalt+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
--- Funktion zum Abrufen der Energieinformationen
-function getEnergyStorages()
-    local peripherals = peripheral.getNames()
-    local energyStorages = {}
-
-    for _, name in ipairs(peripherals) do
-        local type = peripheral.getType(name)
-        if type == "energy_storage" then
-            local energyStorage = peripheral.wrap(name)
-            if energyStorage and energyStorage.getEnergy and energyStorage.getMaxEnergy then
-                table.insert(energyStorages, {
-                    name = name,
-                    energy = energyStorage.getEnergy(),
-                    maxEnergy = energyStorage.getMaxEnergy()
-                })
-            else
-                print("Warnung: " .. name .. " unterstützt nicht die benötigten Methoden.")
-            end
+    for i = 1, width do
+        if i <= filled then
+            bar = bar .. "|"
+        else
+            bar = bar .. " "
         end
     end
 
-    return energyStorages
+    term.setCursorPos(x, y)
+    term.write("[" .. bar .. "]")
 end
 
+-- Funktion zum Abrufen des symbolischen Energiestands
+function getSymbolicEnergy(name)
+    local inventory = peripheral.wrap(name)
+    if inventory then
+        local items = inventory.list()
+        local totalItems = 0
+
+        -- Zähle die Anzahl der Items im Inventar
+        for slot, item in pairs(items) do
+            totalItems = totalItems + item.count
+        end
+
+        -- Beispiel: Maximal 64 Items pro Slot, 10 Slots
+        local maxItems = 64 * 10
+        return totalItems, maxItems
+    end
+    return 0, 1
+end
 
 -- Funktion zum Anzeigen der Energieinformationen
 function displayEnergy()
@@ -35,17 +42,25 @@ function displayEnergy()
     print("Energiespeicher Anzeige:")
     print("------------------------")
 
-    local energyStorages = getEnergyStorages()
+    local peripherals = peripheral.getNames()
+    local found = false
 
-    if #energyStorages == 0 then
-        print("Keine Energiespeicher gefunden.")
-    else
-        for _, storage in ipairs(energyStorages) do
-            print("Speicher: " .. storage.name)
-            print("Aktuelle Energie: " .. storage.energy)
-            print("Maximale Energie: " .. storage.maxEnergy)
-            print("------------------------")
+    for _, name in ipairs(peripherals) do
+        if name:find("indrev:") then
+            found = true
+            local currentEnergy, maxEnergy = getSymbolicEnergy(name)
+            print("Speicher: " .. name)
+            print("Aktuelle Energie: " .. currentEnergy)
+            print("Maximale Energie: " .. maxEnergy)
+
+            -- Zeichne den Ladebalken
+            drawProgressBar(1, 5, 20, currentEnergy, maxEnergy)
+            print("\n------------------------")
         end
+    end
+
+    if not found then
+        print("Keine Energiespeicher gefunden.")
     end
 end
 
