@@ -12,16 +12,21 @@ function getEnergyStorages()
         local type = peripheral.getType(name)
         if type == "energy_storage" then
             local energyStorage = peripheral.wrap(name)
-            table.insert(energyStorages, {
-                name = name,
-                energy = energyStorage.getEnergy(),
-                maxEnergy = energyStorage.getMaxEnergy()
-            })
+            if energyStorage and energyStorage.getEnergy and energyStorage.getMaxEnergy then
+                table.insert(energyStorages, {
+                    name = name,
+                    energy = energyStorage.getEnergy(),
+                    maxEnergy = energyStorage.getMaxEnergy()
+                })
+            else
+                print("Warnung: " .. name .. " unterstützt nicht die benötigten Methoden.")
+            end
         end
     end
 
     return energyStorages
 end
+
 
 -- Funktion zum Anzeigen der Energieinformationen
 function displayEnergy()
